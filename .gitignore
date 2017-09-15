@@ -1,5 +1,6 @@
 *~
 *.pyc
+*.log
 *#
 .metadata
 .DS_Store
