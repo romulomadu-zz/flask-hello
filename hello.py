@@ -1,29 +1,43 @@
 import os
-from flask import Flask, url_for, request, render_template, redirect, flash
+from flask import Flask, url_for, request, render_template, redirect, flash, make_response
 
 app = Flask(__name__)
 app.config['SERVER_NAME']
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['POST', 'GET'])
 def login():
-  error = None
-  if request.method == 'POST':
-    if valid_login(request.form['username'],request.form['password']):
-      flash("Succesfully logged in")
-      return redirect(url_for('welcome', username=request.form.get('username')))
+    error = None
+    if request.method == 'POST':
+        if valid_login(request.form.get('username'),
+                        request.form.get('password')):
+            flash("Succesfully logged in")
+            response = make_response(redirect(url_for('welcome')))
+            response.set_cookie('username', request.form.get('username'))
+            return response
+        else:
+            error = "Incorrect username and password"
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    response = make_response(redirect(url_for('login')))
+    response.set_cookie('username', '', expires=0)
+    return response
+
+@app.route('/')
+def welcome():
+    username = request.cookies.get("username")
+    if username:
+        return render_template('welcome.html', username=username)
     else:
-      error = 'Incorrect username and password'
-  return render_template('login.html', error=error)
+        return redirect(url_for('login'))
 
-def valid_login(username,password):
-  if username == password:
-    return True
-  else:
-    return False  
-
-@app.route('/welcome/<username>')  
-def welcome(username):
-  return render_template('welcome.html', username=username)
+def valid_login(username, password):
+    if username == password:
+        return True
+    else:
+        return False
+      
 if __name__ == '__main__':
   host = os.getenv('IP','0.0.0.0')
   port = int(os.getenv('PORT', 5000))
