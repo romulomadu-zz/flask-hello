@@ -1,4 +1,6 @@
 import os
+import pymysql
+
 from flask import Flask, url_for, request, render_template, redirect, flash, session
 import logging
 from logging.handlers import RotatingFileHandler
@@ -34,7 +36,22 @@ def welcome():
         return redirect(url_for('login'))
 
 def valid_login(username, password):
-    if username == password:
+    MYSQL_DATABASE_HOST = os.getenv('IP', '0.0.0.0')
+    MYSQL_DATABASE_USER =   'cabox'
+    MYSQL_DATABASE_PASSWORD = ''
+    MYSQL_DATABASE_DB = 'my_flask_app'
+    
+    conn = pymysql.connect(
+      host=MYSQL_DATABASE_HOST,
+      user=MYSQL_DATABASE_USER,
+      passwd=MYSQL_DATABASE_PASSWORD,
+      db=MYSQL_DATABASE_DB
+    )
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM user WHERE username='%s' AND password='%s'" % (username, password))
+    data = cursor.fetchone()
+    
+    if data:
         return True
     else:
         return False
